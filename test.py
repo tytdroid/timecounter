@@ -1,29 +1,12 @@
 import tkinter as tk
 from tkinter import messagebox
-import time
-import winsound  # Windows用
+import timer
 
 # --------------------
-# 設定値
+# GUI コールバック
 # --------------------
-MAX_SECONDS = 60 * 60  # 60分
-BEEP_FREQ = 1000
-BEEP_DURATION = 200  # ms
-
-# --------------------
-# グローバル状態
-# --------------------
-interval_seconds = None
-start_time = None
-count = 1
-running = False
-
-# --------------------
-# 周期設定
-# --------------------
-def set_interval():
-    global interval_seconds
-
+def on_set_interval():
+    """周期設定ボタンが押されたときの処理"""
     try:
         minutes = int(minutes_spinbox.get())
         seconds = float(seconds_spinbox.get())
@@ -31,57 +14,29 @@ def set_interval():
         messagebox.showerror("エラー", "数値を入力してください")
         return
 
-    if minutes < 0 or seconds < 0:
-        messagebox.showerror("エラー", "負の値は設定できません")
-        return
+    success, message = timer.set_interval(minutes, seconds)
+    if success:
+        status_label.config(text=message)
+    else:
+        messagebox.showerror("エラー", message)
 
-    value = minutes * 60 + seconds
 
-    if value <= 0:
-        messagebox.showerror("エラー", "0より大きい値を入力してください")
-        return
+def on_start_timer():
+    """開始ボタンが押されたときの処理"""
+    success, message = timer.start_timer_func()
+    if success:
+        status_label.config(text=message)
+        check_time_loop()
+    else:
+        messagebox.showerror("エラー", message)
 
-    if value > MAX_SECONDS:
-        messagebox.showerror("エラー", "最大60分まで設定可能です")
-        return
 
-    interval_seconds = value
-    status_label.config(text=f"周期設定済み：{interval_seconds:.1f} 秒")
-
-# --------------------
-# 計測開始
-# --------------------
-def start_timer():
-    global start_time, count, running
-
-    if interval_seconds is None:
-        messagebox.showerror("エラー", "周期を先に設定してください")
-        return
-
-    start_time = time.perf_counter()
-    count = 1
-    running = True
-
-    status_label.config(text="計測中...")
-    check_time()
-
-# --------------------
-# 時間監視ループ
-# --------------------
-def check_time():
-    global count
-
-    if not running or interval_seconds is None or start_time is None:
-        return
-
-    now = time.perf_counter()
-    target = start_time + interval_seconds * count
-
-    if now >= target:
-        winsound.Beep(BEEP_FREQ, BEEP_DURATION)
-        count += 1
-
-    root.after(10, check_time)  # 10ms周期
+def check_time_loop():
+    """時間監視ループ"""
+    if timer.check_time():
+        root.after(10, check_time_loop)  # 10ms周期
+    else:
+        timer.stop_timer()
 
 # --------------------
 # GUI構築
@@ -110,8 +65,8 @@ seconds_spinbox.delete(0, tk.END)
 seconds_spinbox.insert(0, "0")
 seconds_spinbox.pack(side=tk.LEFT)
 
-tk.Button(root, text="OK（周期設定）", command=set_interval).pack(pady=5)
-tk.Button(root, text="Start", command=start_timer).pack(pady=5)
+tk.Button(root, text="OK（周期設定）", command=on_set_interval).pack(pady=5)
+tk.Button(root, text="Start", command=on_start_timer).pack(pady=5)
 
 status_label = tk.Label(root, text="周期未設定")
 status_label.pack(pady=10)
