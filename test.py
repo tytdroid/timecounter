@@ -25,17 +25,21 @@ def set_interval():
     global interval_seconds
 
     try:
-        value = float(interval_entry.get())
+        minutes = int(minutes_spinbox.get())
+        seconds = float(seconds_spinbox.get())
     except ValueError:
         messagebox.showerror("エラー", "数値を入力してください")
         return
 
-    if value <= 0:
-        messagebox.showerror("エラー", "正の値を入力してください")
+    if minutes < 0 or seconds < 0:
+        messagebox.showerror("エラー", "負の値は設定できません")
         return
 
-    if unit.get() == "min":
-        value *= 60
+    value = minutes * 60 + seconds
+
+    if value <= 0:
+        messagebox.showerror("エラー", "0より大きい値を入力してください")
+        return
 
     if value > MAX_SECONDS:
         messagebox.showerror("エラー", "最大60分まで設定可能です")
@@ -84,16 +88,27 @@ def check_time():
 # --------------------
 root = tk.Tk()
 root.title("時間感覚トレーニングタイマー")
-root.geometry("300x230")
+root.geometry("300x280")
 
-tk.Label(root, text="周期入力").pack(pady=5)
+tk.Label(root, text="周期入力（分:秒）").pack(pady=5)
 
-interval_entry = tk.Entry(root, justify="center")
-interval_entry.pack()
+# 分のスピンボックス
+frame_minutes = tk.Frame(root)
+frame_minutes.pack(pady=5)
+tk.Label(frame_minutes, text="分：").pack(side=tk.LEFT)
+minutes_spinbox = tk.Spinbox(frame_minutes, from_=0, to=60, width=5)
+minutes_spinbox.delete(0, tk.END)
+minutes_spinbox.insert(0, "0")
+minutes_spinbox.pack(side=tk.LEFT)
 
-unit = tk.StringVar(value="sec")
-tk.Radiobutton(root, text="秒", variable=unit, value="sec").pack()
-tk.Radiobutton(root, text="分", variable=unit, value="min").pack()
+# 秒のスピンボックス
+frame_seconds = tk.Frame(root)
+frame_seconds.pack(pady=5)
+tk.Label(frame_seconds, text="秒：").pack(side=tk.LEFT)
+seconds_spinbox = tk.Spinbox(frame_seconds, from_=0, to=59.9, width=5, format="%.1f")
+seconds_spinbox.delete(0, tk.END)
+seconds_spinbox.insert(0, "0")
+seconds_spinbox.pack(side=tk.LEFT)
 
 tk.Button(root, text="OK（周期設定）", command=set_interval).pack(pady=5)
 tk.Button(root, text="Start", command=start_timer).pack(pady=5)
